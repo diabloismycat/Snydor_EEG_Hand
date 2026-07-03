@@ -1,19 +1,73 @@
 #include <iostream>
-#include <Eigen/Dense>
+#include <vector>
+
+#include "CSVReader.h"
+#include "EEGBuffer.h"
+#include "MatrixConverter.h"
 #include "ICA.h"
+
 
 int main()
 {
-    Eigen::MatrixXd X(2, 3);
 
-    X << 1, 2, 3,
-         4, 5, 6;
+    CSVReader reader("../data/test.csv");
+
+
+    EEGBuffer buffer(4);
+
 
     ICA ica;
 
-    Eigen::MatrixXd clean = ica.process(X);
 
-    std::cout << clean << std::endl;
+    std::vector<double> sample;
+
+
+
+    while(reader.readSample(sample))
+    {
+
+        buffer.addSample(sample);
+
+
+
+        if(buffer.isFull())
+        {
+
+            auto window =
+                buffer.getWindow();
+
+
+
+            Eigen::MatrixXd X =
+                MatrixConverter::toEigenMatrix(
+                    window
+                );
+
+
+
+            Eigen::MatrixXd clean =
+                ica.process(X);
+
+
+
+            std::cout
+                << "Processed EEG:"
+                << std::endl;
+
+
+            std::cout
+                << clean
+                << std::endl;
+
+
+            std::cout
+                << "-------------"
+                << std::endl;
+
+        }
+
+    }
+
 
     return 0;
 }
